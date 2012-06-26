@@ -1,0 +1,81 @@
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define MAX_SIZE 30
+int len = 0;
+
+void readFromFd(int fd);
+void getFds(int* fds);
+
+
+int main()
+{
+	int fds[MAX_SIZE];
+	int actual[MAX_SIZE] = {1};
+	int continFl = 1,i,count;
+
+	getFds(fds);	
+	
+	while(continFl)
+	{	
+		continFl = 0;
+		for(i = 0; i < len; i++)
+		{
+			if(actual[i])
+			{
+				struct pollfd pollFd;
+				pollFd.fd = fds[i];
+				pollFd.events = POLLIN | POLLNVAL | POLLERR | POLLHUP;
+				count = poll(&pollFd,1,0);
+				
+				if(count == -1)
+					perror("Poll fail.");
+				else
+				{
+					if(pollFd.revents & POLLIN)
+					{
+						readFromFd(pollFd.fd);
+						continFl = 1;
+					}
+					else
+					{
+						if(pollFd.revents & (POLLNVAL | POLLERR | POLLHUP))
+							actual[i] = 0;
+					}	
+				}		
+			}			
+		}
+	}
+}
+void readFromFd(int fd)
+{
+	char buf[256];
+	int len;
+	fprintf(0, "File descriptor: %d\n",fd);
+	while((len = read(fd,buf,256)) > 0)
+	{
+		write(0, buf, len);	
+	}
+}
+void getFds(int *fds)
+{
+	FILE *file;
+	int fd;
+	file = open("./fd.txt", "r");
+	if(file == NULL)
+	{
+		perror("No file fd.txt");
+		exit(1);
+	}
+	while(!feof(file))
+	{
+		fscanf(file, "%d", &fd );
+		if(len < MAX_SIZE)
+		{
+			fds[len++] = fd;		
+		}
+	}
+	fclose(file);
+}
