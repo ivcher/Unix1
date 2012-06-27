@@ -3,23 +3,22 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#define MAX_ITERATION 10
 
-static void* threadDo(void * arg);
-static void unlock(int id);
-static void lock(int id);
-
+static void* threadDo(void* arg);
+static void myUnlock(int id);
+static void myLock(int id);
 
 static int volatile turn = 0;
 static int volatile flag[2] = {0};
-#define MAX_ITERATION 10
-int counter = 0;
+static int volatile counter = 0;
 
 int main()
 {
 	pthread_t thread[2];
-	int id[2] = {1,2};
-	int i = 0;	
-	while(i < 2) 
+	int id[2] = {0,1};
+	int i =
+	while(i < 2)
 	{
 		if(pthread_create(&thread[i], NULL, threadDo,(void*) &id[i]))
 		{
@@ -31,21 +30,20 @@ int main()
 	pthread_join(thread[0],NULL);		
 	pthread_join(thread[1],NULL);		
 	
-	return 0;	
+	return 0;
 }
-
 static void *threadDo(void * arg)
 {
 	int id = *((int *)arg), i;
 	for(i = 0; i < MAX_ITERATION; i++)
 	{
-		lock(id);
+		myLock(id);
 		++counter;
 		printf("Thread %d counter = %d\n", id, counter);
-		unlock(id);
-	} 
+		myUnlock(id);
+	}
 }
-static void lock (int id)
+static void myLock (int id)
 {
 	int other = id ^ 1;
 	flag[id] = 1;
@@ -60,7 +58,7 @@ static void lock (int id)
 	}
 }
 
-static void unlock(int id)
+static void myUnlock(int id)
 {
 	turn = id ^ 1;
 	flag[id] = 0;
