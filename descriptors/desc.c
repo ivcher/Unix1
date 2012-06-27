@@ -48,22 +48,23 @@ int main()
 			}			
 		}
 	}
+	return 0;
 }
 void readFromFd(int fd)
 {
 	char buf[256];
-	int len;
+	int length;
 	fprintf(0, "File descriptor: %d\n",fd);
-	while((len = read(fd,buf,256)) > 0)
+	while((length = read(fd,buf,256)) > 0)
 	{
-		write(0, buf, len);	
+		write(0, buf, length);	
 	}
 }
 void getFds(int *fds)
 {
 	FILE *file;
 	int fd;
-	file = open("./fd.txt", "r");
+	file = fopen("./myFd.txt", "r");
 	if(file == NULL)
 	{
 		perror("No file fd.txt");
@@ -72,6 +73,7 @@ void getFds(int *fds)
 	while(!feof(file))
 	{
 		fscanf(file, "%d", &fd );
+		printf("%d<-fd\n", fd);		
 		if(len < MAX_SIZE)
 		{
 			fds[len++] = fd;		
