@@ -13,11 +13,14 @@ static int volatile turn = 0;
 static int volatile flag[2] = {0};
 static int volatile counter = 0;
 
+static void inline mfence(void) {
+	asm volatile ("mfence" : : : "memory");
+}
 int main()
 {
 	pthread_t thread[2];
 	int id[2] = {0,1};
-	int i =
+	int i = 0;
 	while(i < 2)
 	{
 		if(pthread_create(&thread[i], NULL, threadDo,(void*) &id[i]))
@@ -47,13 +50,18 @@ static void myLock (int id)
 {
 	int other = id ^ 1;
 	flag[id] = 1;
+
+	mfence();
+
 	while(flag[other])
 	{
 		if( turn != id )
 		{
 			flag[id] = 0;
+			mfence();
 			while (turn != id);
 			flag[id] = 1;
+			mfence();
 		}
 	}
 }
@@ -62,4 +70,5 @@ static void myUnlock(int id)
 {
 	turn = id ^ 1;
 	flag[id] = 0;
+	mfence();
 }
